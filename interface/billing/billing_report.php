@@ -626,9 +626,10 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                             xl("Authorization Status"),
                             xl("Last Level Billed"),
                             xl("X12 Partner"),
+                            xl("Facility"),
                             xl("User")
                         );
-                        $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id,billing.user";
+                        $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id,form_encounter.facility_id," . "billing.user";
                         $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down,text";
                     } else {
                         $TPSCriteriaDisplayMaster = array(
@@ -645,7 +646,8 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                             xl("Billing Status"),
                             xl("Authorization Status"),
                             xl("Last Level Billed"),
-                            xl("X12 Partner")
+                            xl("X12 Partner"),
+                            xl("Facility")
                         );
                         $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id";
                         $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down";
@@ -693,6 +695,7 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                         $TPSCriteriaRadioKeyMaster[6] = "all,0,1,2";
                         // The below section is needed if there is any 'query_drop_down' type in the $TPSCriteriaDataTypeMaster
                         $TPSCriteriaQueryDropDownMaster[1] = "SELECT name,id FROM x12_partners;";
+                        $TPSCriteriaQueryDropDownMaster[2] = "SELECT name, id FROM facility;";
                         $TPSCriteriaQueryDropDownMasterDefault[1] = xl("All"); // Only one item will be here
                         $TPSCriteriaQueryDropDownMasterDefaultKey[1] = "all"; // Only one item will be here
                         // The below section is needed if there is any 'include' type in the $TPSCriteriaDataTypeMaster
