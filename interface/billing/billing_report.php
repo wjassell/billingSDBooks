@@ -630,7 +630,7 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                             xl("User")
                         );
                         $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id,form_encounter.facility_id," . "billing.user";
-                        $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down,query_drop_down" . "text";
+                        $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down,query_drop_down," . "text";
 
                     } else {
                         $TPSCriteriaDisplayMaster = array(
