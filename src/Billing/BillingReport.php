@@ -97,6 +97,13 @@ class BillingReport
                         $query_part_day .= ' AND ' . "(ar_activity.post_time between '" . add_escape_custom($elements[2]) . "' and '" . add_escape_custom($elements[3]) . "')";
                         $query_part_day1 .= ' AND ' . "(payments.dtime between '" . add_escape_custom($elements[2]) . "' and '" . add_escape_custom($elements[3]) . "')";
                     }
+                } elseif (strpos($criteria_value, "form_encounter.facility_id|=|") !== false) {
+                    $elements = explode('|', $criteria_value);
+                    $query_part .= ' AND ' . "form_encounter.facility_id = '" . add_escape_custom($elements[2]) . "'";
+                    if ($daysheet) {
+                        $query_part_day .= ' AND ' . "ar_activity.facility_id = '" . add_escape_custom($elements[2]) . "'";
+                        $query_part_day1 .= ' AND ' . "payments.facility_id = '" . add_escape_custom($elements[2]) . "'";
+                    }
                 } else {
                     $elements = explode('|', $criteria_value);
                     $criteriaItemsWhitelist = [
