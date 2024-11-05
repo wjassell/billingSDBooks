@@ -715,6 +715,7 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                             $_REQUEST['master_to_date_form_encounter_date'] = date("Y-m-d");
                             $_REQUEST['radio_billing_billed'] = 0;
                             $_REQUEST['query_drop_down_master_billing_x12_partner_id'] = "";
+                            $_REQUEST['query_drop_down_master_form_encounter_facility_id'] = "all";                             
                         }
                         ?>
                     <?php
