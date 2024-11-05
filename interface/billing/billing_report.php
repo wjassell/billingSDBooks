@@ -630,7 +630,8 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                             xl("User")
                         );
                         $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id,form_encounter.facility_id," . "billing.user";
-                        $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down,text";
+                        $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down,query_drop_down" . "text";
+
                     } else {
                         $TPSCriteriaDisplayMaster = array(
                             xl("Date of Service"),
@@ -649,8 +650,8 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                             xl("X12 Partner"),
                             xl("Facility")
                         );
-                        $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id";
-                        $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down";
+                        $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id,form_encounter.facility_id";
+                        $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down,query_drop_down";
                     }
                         // The below section is needed if there is any 'radio' or 'radio_like' type in the $TPSCriteriaDataTypeMaster
                         // $TPSCriteriaDisplayRadioMaster,$TPSCriteriaRadioKeyMaster ==>For each radio data type this pair comes.
@@ -695,9 +696,11 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                         $TPSCriteriaRadioKeyMaster[6] = "all,0,1,2";
                         // The below section is needed if there is any 'query_drop_down' type in the $TPSCriteriaDataTypeMaster
                         $TPSCriteriaQueryDropDownMaster[1] = "SELECT name,id FROM x12_partners;";
-                        $TPSCriteriaQueryDropDownMaster[2] = "SELECT name, id FROM facility;";
                         $TPSCriteriaQueryDropDownMasterDefault[1] = xl("All"); // Only one item will be here
                         $TPSCriteriaQueryDropDownMasterDefaultKey[1] = "all"; // Only one item will be here
+                        $TPSCriteriaQueryDropDownMaster[2] = "SELECT name, id FROM facility WHERE service_location = 1;";
+                        $TPSCriteriaQueryDropDownMasterDefault[2] = xl("All Facilities"); // Default display text for Facility dropdown
+                        $TPSCriteriaQueryDropDownMasterDefaultKey[2] = "all"; // Default key for Facility dropdown
                         // The below section is needed if there is any 'include' type in the $TPSCriteriaDataTypeMaster
                         // Function name is added here.Corresponding include files need to be included in the respective pages as done in this page.
                         // It is labled(Included for Insurance ajax criteria)(Line:-279-299).
