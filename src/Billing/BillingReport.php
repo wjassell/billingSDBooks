@@ -104,6 +104,13 @@ class BillingReport
                         $query_part_day .= ' AND ' . "ar_activity.facility_id = '" . add_escape_custom($elements[2]) . "'";
                         $query_part_day1 .= ' AND ' . "payments.facility_id = '" . add_escape_custom($elements[2]) . "'";
                     }
+                } elseif (strpos($criteria_value, "form_encounter.billing_facility|=|") !== false) {
+    				$elements = explode('|', $criteria_value);
+    				$query_part .= ' AND ' . "form_encounter.billing_facility = '" . add_escape_custom($elements[2]) . "'";
+    				if ($daysheet) {
+        				$query_part_day .= ' AND ' . "ar_activity.billing_facility = '" . add_escape_custom($elements[2]) . "'";
+        				$query_part_day1 .= ' AND ' . "payments.billing_facility = '" . add_escape_custom($elements[2]) . "'";
+    				}
                 } else {
                     $elements = explode('|', $criteria_value);
                     $criteriaItemsWhitelist = [
