@@ -631,7 +631,7 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                             xl("Encounter Type"),
                             xl("User")
                         );
-                        $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id,form_encounter.facility_id," . "form_encounter.billing_facility,form_encounter.encounter_type_code,billing.user";
+                        $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id,form_encounter.facility_id," . "form_encounter.`billing_facility`,form_encounter.encounter_type_code,billing.user";
                         $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down,query_drop_down," . "query_drop_down,query_drop_down,text";
 
                     } else {
@@ -654,7 +654,7 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                             xl("Billing Facility"),
                             xl("Encounter Type")
                         );
-                        $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id,form_encounter.facility_id," . "form_encounter.billing_facility,form_encounter.encounter_type_code";
+                        $TPSCriteriaKeyMaster = "form_encounter.date,billing.date,claims.process_time,claims.target,patient_data.fname," . "form_encounter.pid,claims.payer_id,form_encounter.encounter,insurance_data.provider,billing.id,billing.billed," . "billing.authorized,form_encounter.last_level_billed,billing.x12_partner_id,form_encounter.facility_id," . "form_encounter.`billing_facility`,form_encounter.encounter_type_code";
                         $TPSCriteriaDataTypeMaster = "datetime,datetime,datetime,radio,text_like," . "text,include,text,radio,radio,radio," . "radio_like,radio,query_drop_down,query_drop_down," . "query_drop_down,query_drop_down";
                     }
                         // The below section is needed if there is any 'radio' or 'radio_like' type in the $TPSCriteriaDataTypeMaster
@@ -706,8 +706,8 @@ $partners = $x->_utility_array($x->x12_partner_factory());
                         $TPSCriteriaQueryDropDownMasterDefault[2] = xl("All Facilities"); // Default display text for Facility dropdown
                         $TPSCriteriaQueryDropDownMasterDefaultKey[2] = "all"; // Default key for Facility dropdown
                         $TPSCriteriaQueryDropDownMaster[3] = "SELECT name, id FROM facility WHERE billing_location = 1;";
-                        $TPSCriteriaQueryDropDownMasterDefault[3] = xl("All Facilities"); // Default display text for Facility dropdown
-                        $TPSCriteriaQueryDropDownMasterDefaultKey[3] = "all"; // Default key for Facility dropdown
+                        $TPSCriteriaQueryDropDownMasterDefault[3] = xl("All Facilities"); // Default display text for BillingFacility dropdown
+                        $TPSCriteriaQueryDropDownMasterDefaultKey[3] = "all"; // Default key for BillingFacility dropdown
                         $TPSCriteriaQueryDropDownMaster[4] = "SELECT list_options.title AS name,list_options.option_id AS id FROM list_options list_options WHERE (list_options.list_id = 'encounter-types') AND (list_options.activity = 1);";
                         $TPSCriteriaQueryDropDownMasterDefault[4] = xl("All"); // Default display text for encounter-type dropdown
                         $TPSCriteriaQueryDropDownMasterDefaultKey[4] = "all"; // Default key for encounter-type dropdown
