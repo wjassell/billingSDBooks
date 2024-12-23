@@ -248,24 +248,40 @@ function era_callback(&$out)
         $last_code = '';
         $invoice_total = 0.00;
         $bgcolor = (++$encount & 1) ? "#ddddff" : "#ffdddd";
-        list($pid, $encounter, $invnumber) = SLEOB::slInvoiceNumber($out);
+        
+        // Check if the 'our_claim_id' contains a dash
+        if (strpos($out['our_claim_id'], '-') === false) {
+            // If no dash, match on encounter number only
+            $encounter = $out['our_claim_id'];
+            $pid = null;  // Set PID to null or handle as needed
+        } else {
+            // If it contains a dash, use the original logic
+            list($pid, $encounter, $invnumber) = SLEOB::slInvoiceNumber($out);
+        }
 
         // Get details, if we have them, for the invoice.
         $inverror = true;
         $codes = array();
-        if ($pid && $encounter) {
+        if ($encounter) {
             // Get invoice data into $arrow or $ferow.
-            $ferow = sqlQuery("SELECT e.*, p.fname, p.mname, p.lname " .
-            "FROM form_encounter AS e, patient_data AS p WHERE " .
-            "e.pid = ? AND e.encounter = ? AND " .
-            "p.pid = e.pid", array($pid, $encounter));
-            if (empty($ferow)) {
-                  $pid = $encounter = 0;
-                  $invnumber = $out['our_claim_id'];
+            if ($pid) {
+                $ferow = sqlQuery("SELECT e.*, p.fname, p.mname, p.lname " .
+                "FROM form_encounter AS e, patient_data AS p WHERE " .
+                "e.pid = ? AND e.encounter = ? AND " .
+                "p.pid = e.pid", array($pid, $encounter));
             } else {
-                  $inverror = false;
-                  $codes = InvoiceSummary::arGetInvoiceSummary($pid, $encounter, true);
-                  // $svcdate = substr($ferow['date'], 0, 10);
+                $ferow = sqlQuery("SELECT e.*, p.fname, p.mname, p.lname " .
+                "FROM form_encounter AS e, patient_data AS p WHERE " .
+                "e.encounter = ?", array($encounter));
+            }
+            
+            if (empty($ferow)) {
+                $pid = $encounter = 0;
+                $invnumber = $out['our_claim_id'];
+            } else {
+                $inverror = false;
+                $codes = InvoiceSummary::arGetInvoiceSummary($pid, $encounter, true);
+                // $svcdate = substr($ferow['date'], 0, 10);
             }
         }
 
