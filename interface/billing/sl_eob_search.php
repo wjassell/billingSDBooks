@@ -151,21 +151,32 @@ if (!empty($GLOBALS['portal_onsite_two_enable'])) {
 function era_callback(&$out)
 {
     global $where, $eracount, $eraname;
-    // print_r($out); // debugging
     ++$eracount;
-    // $eraname = $out['isa_control_number'];
-    // since it's always sent we use isa_sender_id if payer_id is not provided
     $eraname = $out['gs_date'] . '_' . ltrim($out['isa_control_number'], '0') .
         '_' . ltrim($out['payer_id'] ? $out['payer_id'] : $out['isa_sender_id'], '0');
 
     if (!empty($out['our_claim_id'])) {
-        list($pid, $encounter, $invnumber) = SLEOB::slInvoiceNumber($out);
-        if ($pid && $encounter) {
+        // Check if the 'our_claim_id' contains a dash
+        if (strpos($out['our_claim_id'], '-') === false) {
+            // If no dash, match on encounter number only
+            $encounter = $out['our_claim_id'];
+            $pid = null;  // Set PID to null or handle as needed
+        } else {
+            // If it contains a dash, use the original logic
+            list($pid, $encounter, $invnumber) = SLEOB::slInvoiceNumber($out);
+        }
+
+        if ($encounter) {
             if ($where) {
                 $where .= ' OR ';
             }
 
-            $where .= "( f.pid = '" . add_escape_custom($pid) . "' AND f.encounter = '" . add_escape_custom($encounter) . "' )";
+            // Adjust the WHERE clause based on whether PID is available
+            if ($pid) {
+                $where .= "( f.pid = '" . add_escape_custom($pid) . "' AND f.encounter = '" . add_escape_custom($encounter) . "' )";
+            } else {
+                $where .= "( f.encounter = '" . add_escape_custom($encounter) . "' )";
+            }
         }
     }
 }
