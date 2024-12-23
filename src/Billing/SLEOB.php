@@ -24,43 +24,38 @@ class SLEOB
     // claim ID and other stuff in the ERA.  This should be straightforward
     // except that some payers mangle the claim ID that we give them.
     //
-    public static function slInvoiceNumber(&$out)
-    {
-        $invnumber = $out['our_claim_id'];
-        $atmp = preg_split('/[ -]/', $invnumber);
-        $acount = count($atmp);
+public static function slInvoiceNumber(&$out)
+{
+    $invnumber = $out['our_claim_id'];
+    $atmp = preg_split('/[ -]/', $invnumber);
+    $acount = count($atmp);
 
-        $pid = 0;
-        $encounter = 0;
-        if ($acount == 2) {
-            $pid = $atmp[0];
-            $encounter = $atmp[1];
-        } elseif ($acount == 3) {
-            $pid = $atmp[0];
-            $brow = sqlQuery("SELECT encounter FROM billing WHERE " .
-                "pid = '$pid' AND encounter = ? AND activity = 1", array($atmp[1]));
+    $pid = 0;
+    $encounter = 0;
+    if ($acount == 2) {
+        $pid = $atmp[0];
+        $encounter = $atmp[1];
+    } elseif ($acount == 3) {
+        $pid = $atmp[0];
+        $brow = sqlQuery("SELECT encounter FROM billing WHERE " .
+            "pid = '$pid' AND encounter = ? AND activity = 1", array($atmp[1]));
 
-            $encounter = $brow['encounter'];
-        } elseif ($acount == 1) {
-            $pres = sqlStatement("SELECT pid FROM patient_data WHERE " .
-                "lname LIKE ? AND " .
-                "fname LIKE ? " .
-                "ORDER BY pid DESC", array($out['patient_lname'], $out['patient_fname']));
-            while ($prow = sqlFetchArray($pres)) {
-                if (strpos($invnumber, $prow['pid']) === 0) {
-                    $pid = $prow['pid'];
-                    $encounter = substr($invnumber, strlen($pid));
-                    break;
-                }
-            }
+        $encounter = $brow['encounter'];
+    } elseif ($acount == 1) {
+        // Query form_encounter to get pid based on encounter number
+        $encounter = $invnumber;
+        $frow = sqlQuery("SELECT pid FROM form_encounter WHERE encounter = ?", array($encounter));
+        if ($frow) {
+            $pid = $frow['pid'];
         }
-
-        if ($pid && $encounter) {
-            $invnumber = "$pid.$encounter";
-        }
-
-        return array($pid, $encounter, $invnumber);
     }
+
+    if ($pid && $encounter) {
+        $invnumber = "$pid.$encounter";
+    }
+
+    return array($pid, $encounter, $invnumber);
+}
 
     // This gets a posting session ID.  If the payer ID is not 0 and a matching
     // session already exists, then its ID is returned.  Otherwise a new session
