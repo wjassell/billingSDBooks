@@ -372,69 +372,90 @@ function era_callback(&$out)
             $codetype = ''; //will hold code type, if exists
 
             // This reports detail lines already on file for this service item.
-            if ($prev) {
-                $codetype = $codes[$codekey]['code_type']; //store code type
-                writeOldDetail($prev, $patient_name, $invnumber, $service_date, $codekey, $bgcolor);
-                // Check for sanity in amount charged.
-                $prevchg = sprintf("%.2f", $prev['chg'] + ($prev['adj'] ?? null));
-                if ($prevchg != abs($svc['chg'])) {
-                    writeMessageLine(
-                        $bgcolor,
-                        'errdetail',
-                        "EOB charge amount " . $svc['chg'] . " for this code does not match our invoice"
-                    );
-                    $error = true;
-                }
+           if ($prev) {
+    // Exact match found, process it.
+    $codetype = $codes[$codekey]['code_type']; // Store code type.
+    writeOldDetail($prev, $patient_name, $invnumber, $service_date, $codekey, $bgcolor);
+    
+    // Check for sanity in amount charged.
+    $prevchg = sprintf("%.2f", $prev['chg'] + ($prev['adj'] ?? null));
+    if ($prevchg != abs($svc['chg'])) {
+        writeMessageLine(
+            $bgcolor,
+            'errdetail',
+            "EOB charge amount " . $svc['chg'] . " for this code does not match our invoice"
+        );
+        $error = true;
+    }
 
-                // Check for already-existing primary remittance activity.
-                // Removed this check because it was not allowing for copays manually
-                // entered into the invoice under a non-copay billing code.
-                /****
-            if ((sprintf("%.2f",$prev['chg']) != sprintf("%.2f",$prev['bal']) ||
-                $prev['adj'] != 0) && $primary)
-            {
-                writeMessageLine($bgcolor, 'errdetail',
-                    "This service item already has primary payments and/or adjustments!");
-                $error = true;
-            }
-                ****/
+    unset($codes[$codekey]); // Remove the processed code.
+} elseif ($broaderMatch = array_filter($codes, function ($value) use ($svc) {
+    // First broader match: Match on both `code_value` and `chg`.
+    return ($value['code_value'] ?? '') === $svc['code'] &&
+           ($value['chg'] ?? 0) == $svc['chg'];
+})) {
+    // Process the two-condition broader match.
+    $broaderMatch = reset($broaderMatch); // Get the first match.
+    $codetype = $broaderMatch['code_type'] ?? ''; // Store code type.
 
-                unset($codes[$codekey]);
-            } else { // If the service item is not in our database...
-                // This is not an error. If we are not in error mode and not debugging,
-                // insert the service item into SL.  Then display it (in green if it
-                // was inserted, or in red if we are in error mode).
-                $description = "CPT4:$codekey Added by $inslabel $production_date";
-                if (!$error && !$debug) {
-                    SLEOB::arPostCharge(
-                        $pid,
-                        $encounter,
-                        0,
-                        $svc['chg'],
-                        1,
-                        $service_date,
-                        $codekey,
-                        $description,
-                        $debug,
-                        '',
-                        $codetype ?? ''
-                    );
-                    $invoice_total += $svc['chg'];
-                }
+    writeOldDetail($broaderMatch, $patient_name, $invnumber, $service_date, $svc['code'], $bgcolor);
+    writeMessageLine(
+        $bgcolor,
+        'info',
+        "Broader match found for code: " . $svc['code'] . " with matching charge."
+    );
 
-                $class = $error ? 'errdetail' : 'newdetail';
-                writeDetailLine(
-                    $bgcolor,
-                    $class,
-                    $patient_name,
-                    $invnumber,
-                    $codekey,
-                    $production_date,
-                    $description,
-                    $svc['chg'],
-                    ($error ? '' : $invoice_total)
-                );
-            }
+    unset($codes[array_search($broaderMatch, $codes)]); // Remove the broader match.
+} elseif ($broadestMatch = array_filter($codes, function ($value) use ($svc) {
+    // Second broader match: Match on `code_value` only.
+    return ($value['code_value'] ?? '') === $svc['code'];
+})) {
+    // Process the single-condition broader match.
+    $broadestMatch = reset($broaderMatch); // Get the first match.
+    $codetype = $broadestMatch['code_type'] ?? ''; // Store code type.
+
+    writeOldDetail($broadestMatch, $patient_name, $invnumber, $service_date, $svc['code'], $bgcolor);
+    writeMessageLine(
+        $bgcolor,
+        'info',
+        "Broadest match found for code: " . $svc['code']
+    );
+
+    unset($codes[array_search($broaderMatch, $codes)]); // Remove the broader match.
+} else {
+    // Default case: No match found, process as a new service item.
+    $description = "CPT4:$codekey Added by $inslabel $production_date";
+    if (!$error && !$debug) {
+        SLEOB::arPostCharge(
+            $pid,
+            $encounter,
+            0,
+            $svc['chg'],
+            1,
+            $service_date,
+            $codekey,
+            $description,
+            $debug,
+            '',
+            $codetype ?? ''
+        );
+        $invoice_total += $svc['chg'];
+    }
+
+    $class = $error ? 'errdetail' : 'newdetail';
+    writeDetailLine(
+        $bgcolor,
+        $class,
+        $patient_name,
+        $invnumber,
+        $codekey,
+        $production_date,
+        $description,
+        $svc['chg'],
+        ($error ? '' : $invoice_total)
+    );
+}
+
 
             $class = $error ? 'errdetail' : 'newdetail';
 
