@@ -1,60 +1,57 @@
 <?php
+require_once("../globals.php"); // Ensure OpenEMR globals are included
+
 // Initialize variables
 $results = [];
 $patient = $start_date = $end_date = '';
 $cpt_codes = [];
 
-// Database connection
-$servername = "localhost";
-$username = "root";
-$password = "your_password";
-$dbname = "openemr_db";
+// Fetch dynamic CPT code options
+$cpt_options = [];
+$cpt_query = "SELECT DISTINCT billing_code_CR FROM SDBooks1.s4me_spot_billingcode ORDER BY billing_code_CR";
+$cpt_result = sqlQ($cpt_query);
 
-try {
-    $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+while ($row = $cpt_result->FetchRow()) {
+    $cpt_options[] = $row['billing_code_CR'];
+}
 
-    // Fetch dynamic CPT code options
-    $cpt_query = "SELECT DISTINCT billing_code_CR FROM SDBooks1.s4me_spot_billingcode ORDER BY billing_code_CR";
-    $cpt_stmt = $conn->query($cpt_query);
-    $cpt_options = $cpt_stmt->fetchAll(PDO::FETCH_ASSOC);
+// Check if the form was submitted
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Retrieve form inputs
+    $patient = $_POST['patient'] ?? '';
+    $start_date = $_POST['start_date'] ?? '';
+    $end_date = $_POST['end_date'] ?? '';
+    $cpt_codes = $_POST['cpt_codes'] ?? [];
 
-    // Check if the form was submitted
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Retrieve form inputs
-        $patient = $_POST['patient'] ?? '';
-        $start_date = $_POST['start_date'] ?? '';
-        $end_date = $_POST['end_date'] ?? '';
-        $cpt_codes = $_POST['cpt_codes'] ?? [];
+    // Build the query
+    $sql = "SELECT eo_form_encounter.id, eo_form_encounter.date, s4me_provider.full_name AS Provider, 
+                   s4me_patient.full_name AS Patient, s4me_spot_billingcode.billing_code_CR AS CPT_Code
+            FROM SDBooks1.eo_form_encounter
+            INNER JOIN SDBooks1.s4me_provider ON eo_form_encounter.provider_id = s4me_provider.id
+            INNER JOIN SDBooks1.s4me_patient ON eo_form_encounter.pid = s4me_patient.id
+            INNER JOIN SDBooks1.s4me_spot_billingcode ON eo_form_encounter.pc_catid = s4me_spot_billingcode.spot_id
+            WHERE eo_form_encounter.date BETWEEN ? AND ?";
 
-        // Build the query
-        $sql = "SELECT eo_form_encounter.id, eo_form_encounter.date, s4me_provider.full_name AS Provider, 
-                       s4me_patient.full_name AS Patient, s4me_spot_billingcode.billing_code_CR AS CPT_Code
-                FROM SDBooks1.eo_form_encounter
-                INNER JOIN SDBooks1.s4me_provider ON eo_form_encounter.provider_id = s4me_provider.id
-                INNER JOIN SDBooks1.s4me_patient ON eo_form_encounter.pid = s4me_patient.id
-                INNER JOIN SDBooks1.s4me_spot_billingcode ON eo_form_encounter.pc_catid = s4me_spot_billingcode.spot_id
-                WHERE eo_form_encounter.date BETWEEN :start_date AND :end_date";
+    $params = [$start_date, $end_date];
 
-        if (!empty($cpt_codes)) {
-            $sql .= " AND s4me_spot_billingcode.billing_code_CR IN ('" . implode("','", $cpt_codes) . "')";
-        }
-        if (!empty($patient)) {
-            $sql .= " AND (s4me_patient.full_name LIKE :patient OR eo_form_encounter.pid = :patient)";
-        }
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':start_date', $start_date);
-        $stmt->bindParam(':end_date', $end_date);
-        if (!empty($patient)) {
-            $stmt->bindValue(':patient', "%$patient%");
-        }
-        $stmt->execute();
-
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (!empty($cpt_codes)) {
+        $placeholders = implode(',', array_fill(0, count($cpt_codes), '?'));
+        $sql .= " AND s4me_spot_billingcode.billing_code_CR IN ($placeholders)";
+        $params = array_merge($params, $cpt_codes);
     }
-} catch (PDOException $e) {
-    echo "Error: " . $e->getMessage();
+    if (!empty($patient)) {
+        $sql .= " AND (s4me_patient.full_name LIKE ? OR eo_form_encounter.pid = ?)";
+        $params[] = "%$patient%";
+        $params[] = $patient;
+    }
+
+    // Execute query
+    $stmt = sqlQ($sql, $params);
+
+    // Fetch results
+    while ($row = $stmt->FetchRow()) {
+        $results[] = $row;
+    }
 }
 ?>
 
@@ -77,10 +74,9 @@ try {
         
         <label for="cpt_codes">CPT Codes:</label>
         <select name="cpt_codes[]" id="cpt_codes" multiple>
-            <?php foreach ($cpt_options as $option): ?>
-                <option value="<?= htmlspecialchars($option['billing_code_CR']); ?>" 
-                    <?= in_array($option['billing_code_CR'], $cpt_codes) ? 'selected' : ''; ?>>
-                    <?= htmlspecialchars($option['billing_code_CR']); ?>
+            <?php foreach ($cpt_options as $code): ?>
+                <option value="<?= htmlspecialchars($code); ?>" <?= in_array($code, $cpt_codes) ? 'selected' : ''; ?>>
+                    <?= htmlspecialchars($code); ?>
                 </option>
             <?php endforeach; ?>
         </select><br><br>
