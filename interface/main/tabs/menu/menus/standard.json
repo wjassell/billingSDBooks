@@ -123,6 +123,12 @@
         "icon": "fa-caret-right",
         "children": [
           {
+            "label": "Direct Encounters List",
+            "url": "/interface/custom/direct_encounters_search.php",
+            "target": "pat",
+            "requirement": 1
+          },        
+          {
             "label": "Calendar",
             "menu_id": "cal0",
             "target": "cal",

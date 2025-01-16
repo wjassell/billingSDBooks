@@ -1,57 +1,69 @@
 <?php
-require_once("../globals.php"); // Ensure OpenEMR globals are included
+// Include OpenEMR globals
+require_once("../globals.php");
+
+// Check if a patient is selected
+if (!isset($_SESSION['pid']) || empty($_SESSION['pid'])) {
+    // Redirect to the Patient Finder if no patient is selected
+    header("Location: /interface/main/finder/patient_finder.php");
+    exit;
+}
+
+// Get the selected patient ID
+$patientId = $_SESSION['pid'];
 
 // Initialize variables
 $results = [];
-$patient = $start_date = $end_date = '';
 $cpt_codes = [];
 
-// Fetch dynamic CPT code options
-$cpt_options = [];
-$cpt_query = "SELECT DISTINCT billing_code_CR FROM SDBooks1.s4me_spot_billingcode ORDER BY billing_code_CR";
-$cpt_result = sqlQ($cpt_query);
+// Set default dates to the last 2 weeks
+$end_date = date('Y-m-d');
+$start_date = date('Y-m-d', strtotime('-14 days'));
 
-while ($row = $cpt_result->FetchRow()) {
-    $cpt_options[] = $row['billing_code_CR'];
+// Fetch dynamic CPT code options
+$cpt_query = "SELECT DISTINCT billing_code_CR FROM SDBooks1.s4me_spot_billingcode ORDER BY billing_code_CR";
+$cpt_result = sqlStatement($cpt_query);
+while ($row = sqlFetchArray($cpt_result)) {
+    $cpt_codes[] = $row['billing_code_CR'];
 }
 
-// Check if the form was submitted
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Retrieve form inputs
-    $patient = $_POST['patient'] ?? '';
-    $start_date = $_POST['start_date'] ?? '';
-    $end_date = $_POST['end_date'] ?? '';
-    $cpt_codes = $_POST['cpt_codes'] ?? [];
+// Build the query
+$sql = "
+    SELECT eo_form_encounter.id, eo_form_encounter.date, eo_form_encounter.time_in, eo_form_encounter.time_out, 
+           s4me_provider.full_name AS Provider, s4me_spot_billingcode.billing_code_CR AS CPT_Code
+    FROM SDBooks1.eo_form_encounter
+    INNER JOIN SDBooks1.s4me_provider ON eo_form_encounter.provider_id = s4me_provider.id
+    INNER JOIN SDBooks1.s4me_spot_billingcode ON eo_form_encounter.pc_catid = s4me_spot_billingcode.spot_id
+    WHERE eo_form_encounter.pid = ?
+    AND eo_form_encounter.date BETWEEN ? AND ?
+    ORDER BY eo_form_encounter.time_in ASC
+";
 
-    // Build the query
-    $sql = "SELECT eo_form_encounter.id, eo_form_encounter.date, s4me_provider.full_name AS Provider, 
-                   s4me_patient.full_name AS Patient, s4me_spot_billingcode.billing_code_CR AS CPT_Code
-            FROM SDBooks1.eo_form_encounter
-            INNER JOIN SDBooks1.s4me_provider ON eo_form_encounter.provider_id = s4me_provider.id
-            INNER JOIN SDBooks1.s4me_patient ON eo_form_encounter.pid = s4me_patient.id
-            INNER JOIN SDBooks1.s4me_spot_billingcode ON eo_form_encounter.pc_catid = s4me_spot_billingcode.spot_id
-            WHERE eo_form_encounter.date BETWEEN ? AND ?";
+$params = [$patientId, $start_date, $end_date];
+$stmt = sqlStatement($sql, $params);
 
-    $params = [$start_date, $end_date];
+// Fetch results
+while ($row = sqlFetchArray($stmt)) {
+    // Convert time_in and time_out from UTC to America/Chicago and format as HH:MM AM/PM
+    $timezone = new DateTimeZone('America/Chicago');
+    
+    $start_time = (new DateTime($row['time_in'], new DateTimeZone('UTC')))
+        ->setTimezone($timezone)
+        ->format('h:i A');
 
-    if (!empty($cpt_codes)) {
-        $placeholders = implode(',', array_fill(0, count($cpt_codes), '?'));
-        $sql .= " AND s4me_spot_billingcode.billing_code_CR IN ($placeholders)";
-        $params = array_merge($params, $cpt_codes);
-    }
-    if (!empty($patient)) {
-        $sql .= " AND (s4me_patient.full_name LIKE ? OR eo_form_encounter.pid = ?)";
-        $params[] = "%$patient%";
-        $params[] = $patient;
-    }
+    $end_time = (new DateTime($row['time_out'], new DateTimeZone('UTC')))
+        ->setTimezone($timezone)
+        ->format('h:i A');
 
-    // Execute query
-    $stmt = sqlQ($sql, $params);
-
-    // Fetch results
-    while ($row = $stmt->FetchRow()) {
-        $results[] = $row;
-    }
+    // Add to results
+    $results[] = [
+        'id' => $row['id'],
+        'date' => $row['date'],
+        'start_time' => $start_time,
+        'end_time' => $end_time,
+        'Provider' => $row['Provider'],
+        'CPT_Code' => $row['CPT_Code']
+    ];
 }
 ?>
 
@@ -59,61 +71,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html>
 <head>
     <title>Direct Encounters Search</title>
+    <style>
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        .checkbox-actions {
+            margin: 10px 0;
+        }
+    </style>
+    <script>
+        // Select all checkboxes
+        function selectAllCheckboxes() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = true);
+        }
+
+        // Deselect all checkboxes
+        function deselectAllCheckboxes() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+        }
+    </script>
 </head>
 <body>
     <h1>Direct Encounters Search</h1>
+    <p><strong>Patient ID:</strong> <?= htmlspecialchars($patientId); ?></p>
+
     <form method="POST">
-        <label for="patient">Patient:</label>
-        <input type="text" name="patient" id="patient" value="<?= htmlspecialchars($patient); ?>" placeholder="Enter patient name or ID"><br><br>
-        
-        <label for="start_date">Start Date:</label>
-        <input type="date" name="start_date" id="start_date" value="<?= htmlspecialchars($start_date); ?>"><br><br>
-        
-        <label for="end_date">End Date:</label>
-        <input type="date" name="end_date" id="end_date" value="<?= htmlspecialchars($end_date); ?>"><br><br>
-        
-        <label for="cpt_codes">CPT Codes:</label>
-        <select name="cpt_codes[]" id="cpt_codes" multiple>
-            <?php foreach ($cpt_options as $code): ?>
-                <option value="<?= htmlspecialchars($code); ?>" <?= in_array($code, $cpt_codes) ? 'selected' : ''; ?>>
-                    <?= htmlspecialchars($code); ?>
-                </option>
-            <?php endforeach; ?>
-        </select><br><br>
-        
-        <button type="submit">Search</button>
+        <div class="form-row">
+            <label for="start_date">Start Date:</label>
+            <input type="date" name="start_date" id="start_date" value="<?= htmlspecialchars($start_date); ?>">
+
+            <label for="end_date">End Date:</label>
+            <input type="date" name="end_date" id="end_date" value="<?= htmlspecialchars($end_date); ?>">
+
+            <label for="cpt_codes">CPT Codes:</label>
+            <select name="cpt_codes[]" id="cpt_codes" multiple>
+                <?php foreach ($cpt_codes as $code): ?>
+                    <option value="<?= htmlspecialchars($code); ?>" <?= in_array($code, $selected_cpt_codes ?? []) ? 'selected' : ''; ?>>
+                        <?= htmlspecialchars($code); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+            <button type="submit" name="search">Search</button>
+        </div>
     </form>
 
-    <h2>Results</h2>
-    <form action="generate.php" method="POST">
-        <table border="1">
-            <tr>
-                <th>Select</th>
-                <th>Date</th>
-                <th>Provider</th>
-                <th>Patient</th>
-                <th>CPT Code</th>
-            </tr>
-            <?php if (!empty($results)): ?>
+    <?php if (!empty($results)): ?>
+        <h2>Results</h2>
+        <form method="POST" action="generate.php">
+            <div class="checkbox-actions">
+                <button type="button" onclick="selectAllCheckboxes()">Select All</button>
+                <button type="button" onclick="deselectAllCheckboxes()">Deselect All</button>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Select</th>
+                    <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Provider</th>
+                    <th>CPT Code</th>
+                </tr>
                 <?php foreach ($results as $row): ?>
-                <tr>
-                    <td><input type="checkbox" name="selected_ids[]" value="<?= $row['id']; ?>"></td>
-                    <td><?= htmlspecialchars($row['date']); ?></td>
-                    <td><?= htmlspecialchars($row['Provider']); ?></td>
-                    <td><?= htmlspecialchars($row['Patient']); ?></td>
-                    <td><?= htmlspecialchars($row['CPT_Code']); ?></td>
-                </tr>
+                    <tr>
+                        <td><input type="checkbox" name="selected_ids[]" value="<?= $row['id']; ?>"></td>
+                        <td><?= htmlspecialchars($row['date']); ?></td>
+                        <td><?= htmlspecialchars($row['start_time']); ?></td>
+                        <td><?= htmlspecialchars($row['end_time']); ?></td>
+                        <td><?= htmlspecialchars($row['Provider']); ?></td>
+                        <td><?= htmlspecialchars($row['CPT_Code']); ?></td>
+                    </tr>
                 <?php endforeach; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="5">No results found</td>
-                </tr>
-            <?php endif; ?>
-        </table>
-        <?php if (!empty($results)): ?>
-        <br>
-        <button type="submit">Generate Documentation</button>
-        <?php endif; ?>
-    </form>
+            </table>
+
+            <button type="submit">Generate Documentation</button>
+        </form>
+    <?php endif; ?>
 </body>
 </html>
