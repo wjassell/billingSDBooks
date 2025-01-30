@@ -1081,37 +1081,7 @@ class X125010837P
             }
         }
         //
-        if ($claim->billing_options['provider_qualifier_code'] == 'DK') {
-            // Medicare requires referring provider's name and NPI.
-            ++$edicount;
-            $out .= "NM1" .     // Loop 2310A Referring Provider
-                "*" . $claim->billing_options['provider_qualifier_code'] . // Replace "DN" with dynamic value
-                "*" . "1" .
-                "*";
-            if ($claim->referrerLastName()) {
-                $out .= $claim->referrerLastName();
-            } else {
-                $log .= "*** Missing referrer last name.\n";
-            }
-            $out .= "*";
-            if ($claim->referrerFirstName()) {
-                $out .= $claim->referrerFirstName();
-            } else {
-                $log .= "*** Missing referrer first name.\n";
-            }
-            $out .= "*" .
-                $claim->referrerMiddleName() .
-                "*" .
-                "*";
-            if ($claim->referrerNPI()) {
-                $out .=
-                    "*" . "XX" .
-                    "*" . $claim->referrerNPI();
-            } else {
-                $log .= "*** Referring provider has no NPI.\n";
-            }
-            $out .= "~\n";
-        }
+        
         // Segments NM1*PW, N3, N4 (Ambulance Pick-Up Location) omitted.
         // Segments NM1*45, N3, N4 (Ambulance Drop-Off Location) omitted.
 
@@ -1541,21 +1511,37 @@ class X125010837P
             // Segment REF (Loop 2420D Supervising Provider Secondary Identification) omitted.
 
             // Loop 2420E, Ordering Provider
-            if ($claim->orderer ?? null) {
-                ++$edicount;
-                $out .= "NM1" .
-                    "*" . "DK" .
-                    "*" . "1" .
-                    "*" .  $claim->ordererLastName() . '*' . $claim->ordererFirstName() .
-                    "*" .
-                    "*" .
-                    "*" .
-                    "*" . "XX" .
-                    "*" . $claim->ordererNPI() . "~\n";
-                $out .= "N3" . "*" . $claim->ordererStreet() . "~\n";
-                $out .= "N4" . "*" . $claim->ordererCity() . "*" .
-                    $claim->ordererState() . "*" . $claim->ordererZip() . "~\n";
+            if ($claim->billing_options['provider_qualifier_code'] == 'DK') {
+            // Medicare requires referring provider's name and NPI.
+            ++$edicount;
+            $out .= "NM1" .     // Loop 2310A Referring Provider
+                "*" . $claim->billing_options['provider_qualifier_code'] . // Replace "DN" with dynamic value
+                "*" . "1" .
+                "*";
+            if ($claim->referrerLastName()) {
+                $out .= $claim->referrerLastName();
+            } else {
+                $log .= "*** Missing referrer last name.\n";
             }
+            $out .= "*";
+            if ($claim->referrerFirstName()) {
+                $out .= $claim->referrerFirstName();
+            } else {
+                $log .= "*** Missing referrer first name.\n";
+            }
+            $out .= "*" .
+                $claim->referrerMiddleName() .
+                "*" .
+                "*";
+            if ($claim->referrerNPI()) {
+                $out .=
+                    "*" . "XX" .
+                    "*" . $claim->referrerNPI();
+            } else {
+                $log .= "*** Referring provider has no NPI.\n";
+            }
+            $out .= "~\n";
+        }
 
             // Segment NM1 (Referring Provider Name) omitted.
             // Segment REF (Referring Provider Secondary Identification) omitted.
