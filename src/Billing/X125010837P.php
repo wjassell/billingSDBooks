@@ -893,7 +893,7 @@ class X125010837P
         // Segment HI*BP (Anesthesia Related Procedure) omitted.
         // Segment HI*BG (Condition Information) omitted.
         // Segment HCP (Claim Pricing/Repricing Information) omitted.
-        if ($claim->referrer ?? null) {
+        if ($claim->billing_options['provider_qualifier_code'] == 'DN') {
             // Medicare requires referring provider's name and NPI.
             ++$edicount;
             $out .= "NM1" .     // Loop 2310A Referring Provider
@@ -1080,7 +1080,38 @@ class X125010837P
                     "~\n";
             }
         }
-
+        //
+        if ($claim->billing_options['provider_qualifier_code'] == 'DK') {
+            // Medicare requires referring provider's name and NPI.
+            ++$edicount;
+            $out .= "NM1" .     // Loop 2310A Referring Provider
+                "*" . $claim->billing_options['provider_qualifier_code'] . // Replace "DN" with dynamic value
+                "*" . "1" .
+                "*";
+            if ($claim->referrerLastName()) {
+                $out .= $claim->referrerLastName();
+            } else {
+                $log .= "*** Missing referrer last name.\n";
+            }
+            $out .= "*";
+            if ($claim->referrerFirstName()) {
+                $out .= $claim->referrerFirstName();
+            } else {
+                $log .= "*** Missing referrer first name.\n";
+            }
+            $out .= "*" .
+                $claim->referrerMiddleName() .
+                "*" .
+                "*";
+            if ($claim->referrerNPI()) {
+                $out .=
+                    "*" . "XX" .
+                    "*" . $claim->referrerNPI();
+            } else {
+                $log .= "*** Referring provider has no NPI.\n";
+            }
+            $out .= "~\n";
+        }
         // Segments NM1*PW, N3, N4 (Ambulance Pick-Up Location) omitted.
         // Segments NM1*45, N3, N4 (Ambulance Drop-Off Location) omitted.
 
