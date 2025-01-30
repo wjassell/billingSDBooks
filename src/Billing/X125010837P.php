@@ -897,7 +897,7 @@ class X125010837P
             // Medicare requires referring provider's name and NPI.
             ++$edicount;
             $out .= "NM1" .     // Loop 2310A Referring Provider
-                "*" . "DN" .
+                "*" . "$claim->billing_options['provider_qualifier_code'] . // Replace "DN" with dynamic value
                 "*" . "1" .
                 "*";
             if ($claim->referrerLastName()) {
