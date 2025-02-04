@@ -333,11 +333,11 @@ function era_callback(&$out)
                 "Not posting adjustments for denied claims, please follow up manually!"
             );
         } elseif ($csc == '22') {
-            $inverror = true;
+            $inverror = false;
             writeMessageLine(
                 $bgcolor,
-                'errdetail',
-                "Payment reversals are not automated, please enter manually!"
+                'infdetail',
+                "Processing payment reversal automatically."
             );
         }
 
