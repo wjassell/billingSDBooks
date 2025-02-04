@@ -54,6 +54,7 @@ $alertmsg = '';
 $where = '';
 $eraname = '';
 $eracount = 0;
+$distinct_claim_ids = []; // Initialize an array to store distinct claim IDs
 $g_posting_adj_disable = $GLOBALS['posting_adj_disable'] ? 'checked' : '';
 $posting_adj_disable = prevSetting('sl_eob_search.', 'posting_adj_disable', 'posting_adj_disable', $g_posting_adj_disable);
 $form_cb = false;
@@ -150,7 +151,7 @@ if (!empty($GLOBALS['portal_onsite_two_enable'])) {
 // This is called back by ParseERA::parseERA() if we are processing X12 835's.
 function era_callback(&$out)
 {
-    global $where, $eracount, $eraname;
+    global $where, $eracount, $eraname, $distinct_claim_ids;
     ++$eracount;
     $eraname = $out['gs_date'] . '_' . ltrim($out['isa_control_number'], '0') .
         '_' . ltrim($out['payer_id'] ? $out['payer_id'] : $out['isa_sender_id'], '0');
@@ -176,6 +177,10 @@ function era_callback(&$out)
                 $where .= "( f.pid = '" . add_escape_custom($pid) . "' AND f.encounter = '" . add_escape_custom($encounter) . "' )";
             } else {
                 $where .= "( f.encounter = '" . add_escape_custom($encounter) . "' )";
+            }
+             // Add to the list if not already present
+            if (!in_array($out['our_claim_id'], $distinct_claim_ids)) {
+                $distinct_claim_ids[] = $out['our_claim_id'];
             }
         }
     }
@@ -1052,9 +1057,10 @@ if (
                             // removed if condition on alert message so biller can see what's in the era
                             $t_res = sqlStatement($query);
                             $num_invoices = sqlNumRows($t_res);
+                            $distinct_claim_count = count($distinct_claim_ids);
 
-                            if ($eracount && $num_invoices != $eracount) {
-                                $alertmsg .= "Of $eracount remittances, there are $num_invoices " .
+                            if ($distinct_claim_count && $num_invoices != $distinct_claim_count) {
+                                $alertmsg .= "Of $distinct_claim_count remittances, there are $num_invoices " .
                                     "matching encounters in OpenEMR. ";
                             }
                             ?>
