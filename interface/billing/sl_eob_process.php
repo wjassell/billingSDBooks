@@ -385,7 +385,7 @@ function era_callback(&$out)
             'errdetail',
             "EOB charge amount " . $svc['chg'] . " for this code does not match our invoice"
         );
-        $error = true;
+        $error = false;
     }
 
     unset($codes[$codekey]); // Remove the processed code.
@@ -426,34 +426,34 @@ function era_callback(&$out)
     // Default case: No match found, process as a new service item.
     $description = "CPT4:$codekey Added by $inslabel $production_date";
     if (!$error && !$debug) {
-        SLEOB::arPostCharge(
-            $pid,
-            $encounter,
-            0,
-            $svc['chg'],
-            1,
-            $service_date,
-            $codekey,
-            $description,
-            $debug,
-            '',
-            $codetype ?? ''
-        );
-        $invoice_total += $svc['chg'];
+        //SLEOB::arPostCharge(
+        //    $pid,
+        //    $encounter,
+        //    0,
+        //    $svc['chg'],
+        //    1,
+        //    $service_date,
+        //    $codekey,
+        //    $description,
+        //    $debug,
+        //    '',
+        //    $codetype ?? ''
+        //);
+        //$invoice_total += $svc['chg'];
     }
 
     $class = $error ? 'errdetail' : 'newdetail';
-    writeDetailLine(
-        $bgcolor,
-        $class,
-        $patient_name,
-        $invnumber,
-        $codekey,
-        $production_date,
-        $description,
-        $svc['chg'],
-        ($error ? '' : $invoice_total)
-    );
+    //writeDetailLine(
+    //    $bgcolor,
+    //    $class,
+    //    $patient_name,
+    //    $invnumber,
+    //    $codekey,
+    //    $production_date,
+    //    $description,
+    //    $svc['chg'],
+    //    ($error ? '' : $invoice_total)
+    //);
 }
 
 
