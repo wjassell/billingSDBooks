@@ -1458,7 +1458,7 @@ $partners = $x->_utility_array($x->x12_partner_factory());
             });
 
             $('form[name="update_form"]').on('submit', function(e) {
-                var clickedButton = $("button[type=submit][data-clicked='true'")[0];
+                var clickedButton = $("button[type=submit][data-clicked='true']")[0];
                 // clear clicked button indicator
                 $('button[type="submit"]').attr('data-clicked', false);
 
