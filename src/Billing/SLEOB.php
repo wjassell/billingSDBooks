@@ -83,15 +83,16 @@ public static function slInvoiceNumber(&$out)
     }
 
     //writing the check details to Session Table on ERA proxcessing
-    public static function arPostSession($payer_id, $check_number, $check_date, $pay_total, $post_to_date, $deposit_date, $debug)
+    public static function arPostSession($payer_id, $check_number, $check_date, $pay_total, $post_to_date, $deposit_date, $account, $routing, $erafilename, $payment_method, $debug)
     {
         $query = "INSERT INTO ar_session( " .
-            "payer_id,user_id,closed,reference,check_date,pay_total,post_to_date,deposit_date,patient_id,payment_type,adjustment_code,payment_method " .
-            ") VALUES (?, ?, 0, ?, ?, ?, ? ,?, 0, 'insurance', 'insurance_payment', 'electronic')";
+            "payer_id,user_id,closed,reference,check_date,pay_total,post_to_date,deposit_date,patient_id,payment_type,adjustment_code,payment_method,account,routing,erafilename " .
+            ") VALUES (?, ?, 0, ?, ?, ?, ?, ?, 0, 'insurance', 'insurance_payment', ?, ?, ?, ?)";
+
         if ($debug) {
             echo text($query) . "<br />\n";
         } else {
-            $sessionId = sqlInsert($query, array($payer_id, $_SESSION['authUserID'], 'ePay - ' . $check_number, $check_date, $pay_total, $post_to_date, $deposit_date));
+            $sessionId = sqlInsert($query, array($payer_id, $_SESSION['authUserID'], 'ePay - ' . $check_number, $check_date, $pay_total, $post_to_date, $deposit_date, $payment_method, $account, $routing, $erafilename));
             return $sessionId;
         }
     }
