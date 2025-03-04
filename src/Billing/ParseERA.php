@@ -150,6 +150,9 @@ class ParseERA
 
                 $out['check_amount'] = trim($seg[2]);
                 $out['check_date'] = trim($seg[16]); // yyyymmdd
+                $out['pmt_type'] = trim($seg[4]); //payment_type
+                $out['routing'] = trim($seg[13]); //bank routing
+                $out['account'] = trim($seg[15]); //bank_account
                 // TBD: BPR04 is a payment method code.
             } elseif ($segid == 'TRN') {
                 if ($out['loopid']) {
