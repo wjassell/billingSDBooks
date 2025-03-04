@@ -474,7 +474,7 @@ class ParseERA
         if ($segid != 'IEA') {
             return 'Premature end of ERA file';
         }
-
+        error_log("ParseERA output: " . print_r($out, true)); 
         return '';
     }
 
@@ -525,7 +525,10 @@ class ParseERA
                 ++$check_count;
                 //if ($out['loopid']) return 'Unexpected BPR segment';
                 $out['check_amount' . $check_count] = trim($seg[2]);
-                $out['check_date' . $check_count] = trim($seg[16]); // yyyymmdd
+                $out['check_date' . $check_count] = trim($seg[16]);
+                $out['pmt_type' . $check_count] = trim($seg[4]); //payment_type
+                $out['routing' . $check_count] = trim($seg[13]); //bank routing
+                $out['account' . $check_count] = trim($seg[15]); //bank_account // yyyymmdd
                 // TBD: BPR04 is a payment method code.
             } elseif ($segid == 'N1' && $seg[1] == 'PR') {
                 //if ($out['loopid'] != '1000A') return 'Unexpected N1|PE segment';
@@ -543,9 +546,14 @@ class ParseERA
                 $out['payer_id' . $check_count] = trim($seg[4] ?? '');
                 // Note: TRN04 further qualifies the paying entity within the
                 // organization identified by TRN03.
+            } elseif ($segid == 'REF' && $out['loopid'] == '1000A') {
+                // Other types of REFs may be given to identify the payer, but we
+                // ignore them.
+                if (trim($seg[1] == '2U')) {
+                    $out['payer_id' . $check_count] = trim($seg[2]);
+                }
+
             }
-
-
             ++$out['st_segment_count'];
         }
 

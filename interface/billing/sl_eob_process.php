@@ -207,14 +207,39 @@ function era_callback_check(&$out)
         $StringToEcho .= "</tbody>";
         $StringToEcho .= "</table>";
     } else {
-        for ($check_count = 1; $check_count <= $out['check_count']; $check_count++) {
+                for ($check_count = 1; $check_count <= $out['check_count']; $check_count++) {
             $chk_num = $out['check_number' . $check_count];
             $chk_num = str_replace(' ', '_', $chk_num);
             if (isset($_REQUEST['chk' . $chk_num])) {
                 $check_date = $out['check_date' . $check_count] ? $out['check_date' . $check_count] : $_REQUEST['paydate'];
                 $post_to_date = $_REQUEST['post_to_date'] != '' ? $_REQUEST['post_to_date'] : date('Y-m-d');
                 $deposit_date = $_REQUEST['deposit_date'] != '' ? $_REQUEST['deposit_date'] : date('Y-m-d');
-                $InsertionId[$out['check_number' . $check_count]] = SLEOB::arPostSession($_REQUEST['InsId'], $out['check_number' . $check_count], $out['check_date' . $check_count], $out['check_amount' . $check_count], $post_to_date, $deposit_date,$out['account' . $check_count], $out['routing' . $check_count], $_GET['eraname'], $out['pmt_type' . $check_count], $debug);
+                //lookup payerid if not set
+                if (empty($_REQUEST['InsId'])) {
+                    $payer_id_key = 'payer_id' . $check_count;
+                    $payer_cms_id = $out[$payer_id_key];
+                    $query = "SELECT insurance_companies.id 
+                              FROM SDBooks1.insurance_companies insurance_companies 
+                              WHERE (insurance_companies.cms_id = ?) 
+                              AND (insurance_companies.inactive = 0) 
+                              LIMIT 1";
+                    $result = sqlQuery($query, array($payer_cms_id));
+                    $_REQUEST['InsId'] = $result['id'] ?? null; // Assign the retrieved ID or null if not found
+                }
+                
+                $InsertionId[$out['check_number' . $check_count]] = SLEOB::arPostSession(
+                    $_REQUEST['InsId'],
+                    $out['check_number' . $check_count],
+                    $out['check_date' . $check_count],
+                    $out['check_amount' . $check_count],
+                    $post_to_date,
+                    $deposit_date,
+                    $out['account' . $check_count],
+                    $out['routing' . $check_count],
+                    $_GET['eraname'], // Add the filename parameter here
+                    $out['pmt_type' . $check_count], // Add the payment type parameter here
+                    $debug
+                );
             }
         }
     }

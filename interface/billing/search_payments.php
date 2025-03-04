@@ -460,146 +460,154 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                         </div>
                     </fieldset><!--End of Search-->
                     <?php
-                    if (!empty($_POST["mode"]) && ($_POST["mode"] == "SearchPayment")) {
-                        echo "&nbsp;" . "<br />"; // do not remove else below div will not display !!
-                        ?>
-                        <div class="table-responsive-sm">
-                            <table class="table table-sm table-bordered">
+
+if (!empty($_POST["mode"]) && ($_POST["mode"] == "SearchPayment")) {
+    echo "&nbsp;" . "<br />"; // do not remove else below div will not display !!
+    ?>
+    <div class="table-responsive-sm">
+        <table class="table table-sm table-bordered">
+            <?php
+            if (sqlNumRows($ResultSearch) > 0) { ?>
+                <thead class="bg-dark text-light">
+                    <tr>
+                        <th>&nbsp;</th>
+                        <th><?php echo xlt('ID'); ?></th>
+                        <th><?php echo xlt('Date'); ?></th>
+                        <th><?php echo xlt('Paying Entity'); ?></th>
+                        <th><?php echo xlt('Payer'); ?></th>
+                        <th><?php echo xlt('Ins Code'); ?></th>
+                        <th><?php echo xlt('Payment Method'); ?></th>
+                        <th><?php echo xlt('Check Number'); ?></th>
+                        <th><?php echo xlt('Pay Status'); ?></th>
+                        <th><?php echo xlt('Payment'); ?></th>
+                        <th><?php echo xlt('Undistributed'); ?></th>
+                        <th><?php echo xlt('Account'); ?></th>
+                        <th><?php echo xlt('Filename'); ?></th>
+                        <th><?php echo xlt('Cleared'); ?></th>
+                    </tr>
+                </thead>
+                <?php
+                $CountIndex = 0;
+                while ($RowSearch = sqlFetchArray($ResultSearch)) {
+                    $Payer = '';
+                    if ($RowSearch['payer_id'] * 1 > 0) {
+                        //-------------------
+                        $res = sqlStatement("SELECT insurance_companies.name FROM insurance_companies
+                                                where insurance_companies.id =?", [$RowSearch['payer_id']]);
+                        $row = sqlFetchArray($res);
+                        $Payer = $row['name'];
+                        //-------------------
+                    } elseif ($RowSearch['patient_id'] * 1 > 0) {
+                        //-------------------
+                        $res = sqlStatement("SELECT fname,lname,mname FROM patient_data
+                                                where pid =?", [$RowSearch['patient_id']]);
+                        $row = sqlFetchArray($res);
+                        $fname = $row['fname'];
+                        $lname = $row['lname'];
+                        $mname = $row['mname'];
+                        $Payer = $lname . ' ' . $fname . ' ' . $mname;
+                        //-------------------
+                    }
+                    //=============================================
+                    $CountIndex++;
+                    if ($CountIndex % 2 == 1) {
+                        $bgcolor = '#ddddff';
+                    } else {
+                        $bgcolor = '#ffdddd';
+                    }
+                    ?>
+                    <tr bgcolor='<?php echo attr($bgcolor); ?>' class="text">
+                        <td>
+                            <a href="#" onclick="javascript:return DeletePayments(<?php echo attr_js($RowSearch['session_id']); ?>);"><img border="0" src="../pic/Delete.gif"></a>
+                        </td>
+                        <td>
+                            <a class="medium_modal" href="edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>"><?php echo text($RowSearch['session_id']); ?></a>
+                        </td>
+                        <td>
+                            <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'"><?php echo $RowSearch['check_date'] == '0000-00-00' ? '&nbsp;' : text(oeFormatShortDate($RowSearch['check_date'])); ?></a>
+                        </td>
+                        <td>
+                            <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'>
                                 <?php
-                                if (sqlNumRows($ResultSearch) > 0) { ?>
-                                <thead class="bg-dark text-light">
-                                <tr>
-                                <th>&nbsp;</th>
-                                <th><?php echo xlt('ID'); ?></th>
-                                <th><?php echo xlt('Date'); ?></th>
-                                <th><?php echo xlt('Paying Entity'); ?></th>
-                                <th><?php echo xlt('Payer'); ?></th>
-                                <th><?php echo xlt('Ins Code'); ?></th>
-                                <th><?php echo xlt('Payment Method'); ?></th>
-                                <th><?php echo xlt('Check Number'); ?></th>
-                                <th><?php echo xlt('Pay Status'); ?></th>
-                                <th><?php echo xlt('Payment'); ?></th>
-                                <th><?php echo xlt('Undistributed'); ?></th>
-                                </tr>
-                                    </thead>
-                                    <?php
-                                    $CountIndex = 0;
-                                    while ($RowSearch = sqlFetchArray($ResultSearch)) {
-                                        $Payer = '';
-                                        if ($RowSearch['payer_id'] * 1 > 0) {
-                                            //-------------------
-                                            $res = sqlStatement("SELECT insurance_companies.name FROM insurance_companies
-                                                    where insurance_companies.id =?", [$RowSearch['payer_id']]);
-                                            $row = sqlFetchArray($res);
-                                            $Payer = $row['name'];
-                                            //-------------------
-                                        } elseif ($RowSearch['patient_id'] * 1 > 0) {
-                                            //-------------------
-                                            $res = sqlStatement("SELECT fname,lname,mname FROM patient_data
-                                                    where pid =?", [$RowSearch['patient_id']]);
-                                            $row = sqlFetchArray($res);
-                                            $fname = $row['fname'];
-                                            $lname = $row['lname'];
-                                            $mname = $row['mname'];
-                                            $Payer = $lname . ' ' . $fname . ' ' . $mname;
-                                            //-------------------
-                                        }
-                                        //=============================================
-                                        $CountIndex++;
-                                        if ($CountIndex % 2 == 1) {
-                                            $bgcolor = '#ddddff';
-                                        } else {
-                                            $bgcolor = '#ffdddd';
-                                        }
-                                        ?>
-                                        <tr bgcolor='<?php echo attr($bgcolor); ?>' class="text">
-                                            <td>
-                                                <a href="#" onclick="javascript:return DeletePayments(<?php echo attr_js($RowSearch['session_id']); ?>);"><img border="0" src="../pic/Delete.gif"></a>
-                                            </td>
-                                            <td>
-                                                <a class="medium_modal" href="edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>"><?php echo text($RowSearch['session_id']); ?></a>
-                                            </td>
-                                            <td>
-                                                <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'"><?php echo $RowSearch['check_date'] == '0000-00-00' ? '&nbsp;' : text(oeFormatShortDate($RowSearch['check_date'])); ?></a>
-                                            </td>
-                                            <td>
-                                                <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'">
-                                                <?php
-                                                $frow['data_type'] = 1;
-                                                $frow['list_id'] = 'payment_type';
-                                                $PaymentType = '';
-                                                if ($RowSearch['payment_type'] == 'insurance' || $RowSearch['payer_id'] * 1 > 0) {
-                                                    $PaymentType = 'insurance';
-                                                } elseif ($RowSearch['payment_type'] == 'patient' || $RowSearch['patient_id'] * 1 > 0) {
-                                                    $PaymentType = 'patient';
-                                                } elseif (($RowSearch['payer_id'] * 1 == 0 && $RowSearch['patient_id'] * 1 == 0)) {
-                                                    $PaymentType = '';
-                                                }
-                                                generate_print_field($frow, $PaymentType);
-                                                ?></a>
-                                            </td>
-                                            <td>
-                                                <!--<a class='iframe medium_modal' href="edit_payment.php?payment_id=<?php echo htmlspecialchars($RowSearch['session_id']); ?>"><?php echo $Payer == '' ? '&nbsp;' : htmlspecialchars($Payer); ?></a>-->
-                                                <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>')"><?php echo $Payer == '' ? '&nbsp;' : text($Payer); ?></a><!--link to iframe-->
-                                            </td>
-                                            <td>
-                                                <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'><?php echo $RowSearch['payer_id'] * 1 > 0 ? text($RowSearch['payer_id']) : '&nbsp;'; ?></a>
-                                            </td>
-                                            <td class="text-left">
-                                                <!--<a class='iframe medium_modal' href="edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>"><?php
-                                                $frow['data_type'] = 1;
-                                                $frow['list_id'] = 'payment_method';
-                                                generate_print_field($frow, $RowSearch['payment_method']);
-                                                ?></a>-->
-                                                <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'">
-                                                <?php
-                                                $frow['data_type'] = 1;
-                                                $frow['list_id'] = 'payment_method';
-                                                generate_print_field($frow, $RowSearch['payment_method']);
-                                                ?></a>
-                                            </td>
-                                            <td class="text-left">
-                                                <!--<a class='iframe medium_modal' href="edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>"><?php echo $RowSearch['reference'] == '' ? '&nbsp;' : text($RowSearch['reference']); ?></a>-->
-                                                <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'"><?php echo $RowSearch['reference'] == '' ? '&nbsp;' : text($RowSearch['reference']); ?></a>
-                                            </td>
-                                            <td class="text-left">
-                                                <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'">
-                                        <?php
-                                                $rs = sqlStatement("select pay_total,global_amount from ar_session where session_id=?", [$RowSearch['session_id']]);
-                                                $row = sqlFetchArray($rs);
-                                                $pay_total = $row['pay_total'];
-                                                $global_amount = $row['global_amount'];
-                                                $rs = sqlStatement(
-                                                    "select sum(pay_amount) sum_pay_amount from ar_activity where " .
-                                                    "deleted IS NULL AND session_id = ?",
-                                                    [$RowSearch['session_id']]
-                                                );
-                                                $row = sqlFetchArray($rs);
-                                                $pay_amount = $row['sum_pay_amount'];
-                                                $UndistributedAmount = $pay_total - $pay_amount - $global_amount;
-                                                echo $UndistributedAmount * 1 == 0 ? xlt('Fully Paid') : xlt('Unapplied'); ?></a>
-                                            </td>
-                                            <td class="text-right">
-                                                <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'"><?php echo text($RowSearch['pay_total']); ?></a>
-                                            </td>
-                                            <td class="<?php echo attr($StringClass ?? ''); ?>right text-right">
-                                                <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'"><?php echo text(number_format($UndistributedAmount, 2)); ?></a>
-                                            </td>
-                                        </tr>
-                                        <?php
-                                    }// End of while ($RowSearch = sqlFetchArray($ResultSearch))
-                                } else { // End of if(sqlNumRows($ResultSearch)>0)
-                                    ?>
-                                    <tr>
-                                        <td class="text" colspan="11"><?php echo xlt('No Result Found, for the above search criteria.'); ?></td>
-                                    </tr>
-                                    <?php
-                                }// End of else
-                                ?>
-                            </table>
-                        </div><!--End of table-responsive div-->
-                        <?php
-                    }// End of if ($_POST["mode"] == "SearchPayment")
+                                $frow['data_type'] = 1;
+                                $frow['list_id'] = 'payment_type';
+                                $PaymentType = '';
+                                if ($RowSearch['payment_type'] == 'insurance' || $RowSearch['payer_id'] * 1 > 0) {
+                                    $PaymentType = 'insurance';
+                                } elseif ($RowSearch['payment_type'] == 'patient' || $RowSearch['patient_id'] * 1 > 0) {
+                                    $PaymentType = 'patient';
+                                } elseif (($RowSearch['payer_id'] * 1 == 0 && $RowSearch['patient_id'] * 1 == 0)) {
+                                    $PaymentType = '';
+                                }
+                                generate_print_field($frow, $PaymentType);
+                                ?></a>
+                        </td>
+                        <td>
+                            <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>')"><?php echo $Payer == '' ? '&nbsp;' : text($Payer); ?></a>
+                        </td>
+                        <td>
+                            <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'><?php echo $RowSearch['payer_id'] * 1 > 0 ? text($RowSearch['payer_id']) : '&nbsp;'; ?></a>
+                        </td>
+                        <td class="text-left">
+                            <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'>
+                                <?php
+                                $frow['data_type'] = 1;
+                                $frow['list_id'] = 'payment_method';
+                                generate_print_field($frow, $RowSearch['payment_method']);
+                                ?></a>
+                        </td>
+                        <td class="text-left">
+                            <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'"><?php echo $RowSearch['reference'] == '' ? '&nbsp;' : text($RowSearch['reference']); ?></a>
+                        </td>
+                        <td class="text-left">
+                            <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'">
+                                <?php
+                                $rs = sqlStatement("select pay_total,global_amount from ar_session where session_id=?", [$RowSearch['session_id']]);
+                                $row = sqlFetchArray($rs);
+                                $pay_total = $row['pay_total'];
+                                $global_amount = $row['global_amount'];
+                                $rs = sqlStatement(
+                                        "select sum(pay_amount) sum_pay_amount from ar_activity where " .
+                                        "deleted IS NULL AND session_id = ?",
+                                        [$RowSearch['session_id']]
+                                );
+                                $row = sqlFetchArray($rs);
+                                $pay_amount = $row['sum_pay_amount'];
+                                $UndistributedAmount = $pay_total - $pay_amount - $global_amount;
+                                echo $UndistributedAmount * 1 == 0 ? xlt('Fully Paid') : xlt('Unapplied'); ?></a>
+                        </td>
+                        <td class="text-right">
+                            <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'"><?php echo text($RowSearch['pay_total']); ?></a>
+                        </td>
+                        <td class="<?php echo attr($StringClass ?? ''); ?>right text-right">
+                            <a class="medium_modal" href='edit_payment.php?payment_id=<?php echo attr_url($RowSearch['session_id']); ?>'"><?php echo text(number_format($UndistributedAmount, 2)); ?></a>
+                        </td>
+
+                        <td>
+                            <?php echo substr($RowSearch['account'], -4); ?>
+                        </td>
+                        <td>
+                            <?php echo $RowSearch['erafilename']; ?>
+                        </td>
+                        <td>
+                            <?php echo $RowSearch['clear'] ? 'Cleared' : ''; ?>
+                        </td>
+                        
+                    </tr>
+                    <?php
+                }// End of while ($RowSearch = sqlFetchArray($ResultSearch))
+            } else { // End of if(sqlNumRows($ResultSearch)>0)
+                ?>
+                <tr>
+                    <td class="text" colspan="11"><?php echo xlt('No Result Found, for the above search criteria.'); ?></td>
+                </tr>
+                <?php
+            }// End of else
+            ?>
+        </table>
+    </div><?php
+}
+// ... rest of the code ...// End of if ($_POST["mode"] == "SearchPayment")
                     ?>
                     <div class="row">
                         <input id='mode' name='mode' type='hidden' value='' />
