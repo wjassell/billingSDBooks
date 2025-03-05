@@ -220,10 +220,10 @@ function era_callback_check(&$out)
                     $payer_cms_id = $out[$payer_id_key];
                     $query = "SELECT insurance_companies.id 
                               FROM SDBooks1.insurance_companies insurance_companies 
-                              WHERE (insurance_companies.cms_id = ?) 
+                              WHERE ((insurance_companies.cms_id = ?) OR (insurance_companies.alt_cms_id = ?))
                               AND (insurance_companies.inactive = 0) 
                               LIMIT 1";
-                    $result = sqlQuery($query, array($payer_cms_id));
+                    $result = sqlQuery($query, array($payer_cms_id, $payer_cms_id));
                     $_REQUEST['InsId'] = $result['id'] ?? null; // Assign the retrieved ID or null if not found
                 }
                 
