@@ -1551,6 +1551,32 @@ $GLOBALS_METADATA = array(
             '0',                              // default
             xl('Enable adding unmatched code from insurance company to billing table')
         ),
+        'sftp_hostname' => array(
+            xl('SFTP Host Name'),
+            'text',                           // data type
+            '',
+            xl('SFTP Host Name.')
+        ),
+        'portno' => array(
+            xl('Port Number'),
+            'text',                           // data type
+            '',
+            xl('Port Number.')
+        ),
+
+        'sftp_username' => array(
+            xl('User Name'),
+            'text',                           // data type
+            '',
+            xl('User Name.')
+        ),
+        'sftp_password' => array(
+            xl('PassWord'),
+            'text',                           // data type
+            '',
+            xl('Text for fifth account message.')
+        ),
+
 
     ),
 

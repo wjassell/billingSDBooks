@@ -1,0 +1,8 @@
+{
+    "modulename": "ERA Import",
+    "version": "1.0",
+    "globals": [],
+    "requires": {
+      "openemr_version": "7.0.0"
+    }
+  }
