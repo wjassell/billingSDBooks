@@ -216,7 +216,7 @@ class ParseERA
                 $out['payee_state'] = trim($seg[2]);
                 $out['payee_zip'] = trim($seg[3]);
             } elseif ($segid == 'REF' && $out['loopid'] == '1000B') {
-                elseif($seg[1] == 'TJ'){
+                if($seg[1] == 'TJ'){
                     $out['payee_tax_id'] = trim($seg[2]);    
                 }
                 elseif($seg[1] == 'PQ'){
@@ -559,7 +559,7 @@ class ParseERA
                 }
 
             } elseif ($segid == 'REF' && $out['loopid'] == '1000B') {
-                elseif($seg[1] == 'TJ'){
+                if($seg[1] == 'TJ'){
                     $out['payee_tax_id'. $check_count] = trim($seg[2]);    
                 }
                 elseif($seg[1] == 'PQ'){
