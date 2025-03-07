@@ -160,7 +160,7 @@ class ParseERA
                 }
 
                 $out['check_number'] = trim($seg[2]);
-                $out['payer_tax_id'] = substr($seg[3], 1); // 9 digits
+                // $out['payer_tax_id'] = substr($seg[3], 1); // 9 digits
             //    $out['payer_id'] = trim($seg[4]); no payer id in TRN04 for 5010
                 // Note: TRN04 further qualifies the paying entity within the
                 // organization identified by TRN03.
@@ -208,7 +208,7 @@ class ParseERA
                 }
                 $out['loopid'] = '1000B';
                 $out['payee_name'] = trim($seg[2]);
-                $out['payee_tax_id'] = trim($seg[4]);
+                $out['payee_npi'] = trim($seg[4]);
             } elseif ($segid == 'N3' && $out['loopid'] == '1000B') {
                 $out['payee_street'] = trim($seg[1]);
             } elseif ($segid == 'N4' && $out['loopid'] == '1000B') {
@@ -216,7 +216,12 @@ class ParseERA
                 $out['payee_state'] = trim($seg[2]);
                 $out['payee_zip'] = trim($seg[3]);
             } elseif ($segid == 'REF' && $out['loopid'] == '1000B') {
-                // Used to report additional ID numbers.  Ignored.
+                elseif($seg[1] == 'TJ'){
+                    $out['payee_tax_id'] = trim($seg[2]);    
+                }
+                elseif($seg[1] == 'PQ'){
+                    $out['payer_tax_id'] = trim($seg[2]);    
+                }    
             } elseif ($segid == 'LX') {
                 //
                 // Loop 2000 provides for logical grouping of claim payment information.
