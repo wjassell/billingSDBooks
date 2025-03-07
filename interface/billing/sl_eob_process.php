@@ -215,17 +215,33 @@ function era_callback_check(&$out)
                 $post_to_date = $_REQUEST['post_to_date'] != '' ? $_REQUEST['post_to_date'] : date('Y-m-d');
                 $deposit_date = $_REQUEST['deposit_date'] != '' ? $_REQUEST['deposit_date'] : date('Y-m-d');
                 //lookup payerid if not set
-                if (empty($_REQUEST['InsId'])) {
-                    $payer_id_key = 'payer_id' . $check_count;
-                    $payer_cms_id = $out[$payer_id_key];
-                    $query = "SELECT insurance_companies.id 
-                              FROM SDBooks1.insurance_companies insurance_companies 
-                              WHERE ((insurance_companies.cms_id = ?) OR (insurance_companies.alt_cms_id = ?))
-                              AND (insurance_companies.inactive = 0) 
-                              LIMIT 1";
-                    $result = sqlQuery($query, array($payer_cms_id, $payer_cms_id));
-                    $_REQUEST['InsId'] = $result['id'] ?? null; // Assign the retrieved ID or null if not found
-                }
+    if (empty($_REQUEST['InsId'])) {
+    $payer_id_key = 'payer_id' . $check_count;
+    $payer_cms_id = $out[$payer_id_key];
+    $payer_tax_id_key = 'payer_tax_id' . $check_count;
+    $payer_tax_id = $out[$payer_tax_id_key];
+
+    if (!empty($payer_cms_id)) {
+        $query = "SELECT insurance_companies.id
+                  FROM SDBooks1.insurance_companies insurance_companies
+                  WHERE ((insurance_companies.cms_id = ?) OR (insurance_companies.alt_cms_id = ?))
+                  AND (insurance_companies.inactive = 0)
+                  LIMIT 1";
+        $result = sqlQuery($query, array($payer_cms_id, $payer_cms_id));
+        $_REQUEST['InsId'] = $result['id'] ?? null;
+    } elseif (!empty($payer_tax_id)) {
+        $query = "SELECT insurance_companies.id
+                  FROM SDBooks1.insurance_companies insurance_companies
+                  WHERE insurance_companies.attn = ?
+                  AND (insurance_companies.inactive = 0)
+                  LIMIT 1";
+        $result = sqlQuery($query, array($payer_tax_id));
+        $_REQUEST['InsId'] = $result['id'] ?? null;
+    } else {
+        // Log an error or handle the missing payer ID appropriately
+        error_log("Payer ID and Tax ID not found in ERA file for check count: " . $check_count);
+    }
+}
                 
                 $InsertionId[$out['check_number' . $check_count]] = SLEOB::arPostSession(
                     $_REQUEST['InsId'],
