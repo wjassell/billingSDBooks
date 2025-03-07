@@ -543,11 +543,11 @@ class ParseERA
                 //if ($out['loopid'] != '1000A') return 'Unexpected N1|PE segment';
                 $out['loopid'] = '1000B';
                 $out['payee_name' . $check_count] = trim($seg[2]);
-                $out['payee_tax_id' . $check_count] = trim($seg[4]);
+                $out['payee_npi' . $check_count] = trim($seg[4]);
             } elseif ($segid == 'TRN') {
                 //if ($out['loopid']) return 'Unexpected TRN segment';
                 $out['check_number' . $check_count] = trim($seg[2]);
-                $out['payer_tax_id' . $check_count] = substr($seg[3], 1); // 9 digits
+                // $out['payer_tax_id' . $check_count] = substr($seg[3], 1); // 9 digits
                 $out['payer_id' . $check_count] = trim($seg[4] ?? '');
                 // Note: TRN04 further qualifies the paying entity within the
                 // organization identified by TRN03.
@@ -558,6 +558,13 @@ class ParseERA
                     $out['payer_id' . $check_count] = trim($seg[2]);
                 }
 
+            } elseif ($segid == 'REF' && $out['loopid'] == '1000B') {
+                elseif($seg[1] == 'TJ'){
+                    $out['payee_tax_id'. $check_count] = trim($seg[2]);    
+                }
+                elseif($seg[1] == 'PQ'){
+                    $out['payer_tax_id'. $check_count] = trim($seg[2]);    
+                }    
             }
             ++$out['st_segment_count'];
         }
