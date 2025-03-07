@@ -143,6 +143,8 @@ class ParseERA
                 $out['loopid'] = '';
                 $out['st_control_number'] = trim($seg[2]);
                 $out['st_segment_count'] = 0;
+            } elseif ($segid == 'MIA') {
+    // Ignore this segment
             } elseif ($segid == 'BPR') {
                 if ($out['loopid']) {
                     return 'Unexpected BPR segment';
@@ -526,6 +528,8 @@ class ParseERA
             $segid = $seg[0];
 
             if ($segid == 'ISA') {
+            } elseif ($segid == 'MIA') {
+                // Ignore this segment
             } elseif ($segid == 'BPR') {
                 ++$check_count;
                 //if ($out['loopid']) return 'Unexpected BPR segment';
