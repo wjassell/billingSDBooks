@@ -220,6 +220,8 @@ function era_callback_check(&$out)
     $payer_cms_id = $out[$payer_id_key];
     $payer_tax_id_key = 'payer_tax_id' . $check_count;
     $payer_tax_id = $out[$payer_tax_id_key];
+    $payer_name_key = 'payer_name' . $check_count;
+    $payer_name_search = $out[$payer_name_key];
 
     if (!empty($payer_cms_id)) {
         $query = "SELECT insurance_companies.id
@@ -232,14 +234,25 @@ function era_callback_check(&$out)
     } elseif (!empty($payer_tax_id)) {
         $query = "SELECT insurance_companies.id
                   FROM SDBooks1.insurance_companies insurance_companies
-                  WHERE insurance_companies.attn = ?
+                  WHERE FIND_IN_SET(?, insurance_companies.attn)
                   AND (insurance_companies.inactive = 0)
                   LIMIT 1";
         $result = sqlQuery($query, array($payer_tax_id));
         $_REQUEST['InsId'] = $result['id'] ?? null;
-    } else {
+    } else{
+        if (!empty($payer_name_search)) {
+            $query = "SELECT insurance_companies.id
+                    FROM SDBooks1.insurance_companies insurance_companies
+                    WHERE insurance_companies.name LIKE '%' || ? || '%'
+                    AND (insurance_companies.inactive = 0)
+                    LIMIT 1";
+            error_log($query);
+            $result = sqlQuery($query, array($payer_name_search));
+            $_REQUEST['InsId'] = $payer_name_search;//$result['id'] ?? null;
+        }else {
         // Log an error or handle the missing payer ID appropriately
         error_log("Payer ID and Tax ID not found in ERA file for check count: " . $check_count);
+        }
     }
 }
                 
