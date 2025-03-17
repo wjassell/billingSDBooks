@@ -120,7 +120,8 @@ class BillingReport
                         'form_encounter.last_level_billed',
                         'billing.x12_partner_id',
                         'billing.user',
-                        'form_encounter.encounter_type_code'
+                        'form_encounter.encounter_type_code',
+                        'form_encounter.status'
                     ];
                     $criteriaComparisonWhitelist = [
                         '=',
