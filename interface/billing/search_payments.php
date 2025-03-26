@@ -82,6 +82,7 @@ if (isset($_POST["mode"])) {
         $PaymentStatus = isset($_POST['PaymentStatus']) ? trim($_POST['PaymentStatus']) : '';
         $PaymentSortBy = isset($_POST['PaymentSortBy']) ? trim($_POST['PaymentSortBy']) : '';
         $PaymentDate = isset($_POST['payment_date']) ? trim($_POST['payment_date']) : '';
+        $Cleared = isset($_POST['Cleared']) ? trim($_POST['Cleared']) : '';
         $QueryString = "Select * from  ar_session where  ";
         $And = '';
 
@@ -200,7 +201,10 @@ if (isset($_POST["mode"])) {
 
             $And = ' and ';
         }
-
+        if ($Cleared != '') {
+            $QueryString .= " $And cleared = ?";
+            $sqlBindArray[] = $Cleared;
+        }
         if ($PaymentSortBy != '') {
             $SortFieldOld = isset($_POST['SortFieldOld']) ? trim($_POST['SortFieldOld']) : '';
             $Sort = isset($_POST['Sort']) ? trim($_POST['Sort']) : '';
@@ -325,7 +329,35 @@ if (isset($_POST["mode"])) {
 
     document.onclick = HideTheAjaxDivs;
 </script>
+<script>
+    $(document).ready(function() {
+        $('.clear-checkbox').on('change', function() {
+            var sessionId = $(this).data('session-id');
+            var isChecked = $(this).is(':checked');
+            var clearStatus = isChecked ? 1 : 0;
 
+            $.ajax({
+                url: 'update_clear_status.php',
+                type: 'POST',
+                data: {
+                    session_id: sessionId,
+                    clear: clearStatus
+                },
+                dataType: 'json', 
+                success: function(response) {
+                    if (response.success) {
+                        //alert('Payment status updated successfully.');
+                    } else {
+                        alert('Failed to update payment status.');
+                    }
+                },
+                error: function() {
+                    alert('Error updating payment status.');
+                }
+            });
+        });
+    });
+</script>
 <style>
 #ajax_div_insurance {
     position: absolute;
@@ -443,6 +475,14 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                                     <div class="form-control" id="div_insurance_or_patient"><?php echo attr($_POST['hidden_type_code'] ?? ''); ?></div>
                                     <input id="description" name="description" type="hidden" />
                                     <input id="deposit_date" name="deposit_date" style="display:none" type="text" />
+                                </div>
+                                <div class="forms col-3">
+                                    <label class="control-label" for="Cleared"><?php echo xlt('Cleared'); ?>:</label>
+                                    <select id="Cleared" name="Cleared" class="form-control">
+                                        <option value="" <?php echo isset($_POST['Cleared']) && $_POST['Cleared'] == '' ? 'selected' : ''; ?>><?php echo xlt('All'); ?></option>
+                                        <option value="1" <?php echo isset($_POST['Cleared']) && $_POST['Cleared'] == '1' ? 'selected' : ''; ?>><?php echo xlt('Yes'); ?></option>
+                                        <option value="0" <?php echo isset($_POST['Cleared']) && $_POST['Cleared'] == '0' ? 'selected' : ''; ?>><?php echo xlt('No'); ?></option>
+                                    </select>
                                 </div>
                                 <div class="forms col-3">
                                     <label class="control-label" for="PaymentSortBy"><?php echo xlt('Sort Result by'); ?>:</label>
@@ -590,7 +630,7 @@ if (!empty($_POST["mode"]) && ($_POST["mode"] == "SearchPayment")) {
                             <?php echo $RowSearch['erafilename']; ?>
                         </td>
                         <td>
-                            <?php echo $RowSearch['clear'] ? 'Cleared' : ''; ?>
+                        <input type="checkbox" class="clear-checkbox" data-session-id="<?php echo attr($RowSearch['session_id']); ?>" <?php echo $RowSearch['cleared'] ? 'checked' : ''; ?> />
                         </td>
                         
                     </tr>
