@@ -1702,13 +1702,26 @@ class BillingUtilities
                 // "payer_id = '" . $row['payer_id'] . "' AND " .
                 "version = ?", $sqlBindArray);
         }
-
+        // Retrieve the current status of the form_encounter
+        $encounterRow = sqlQuery("SELECT status FROM form_encounter WHERE pid = ? AND encounter = ?", array($patient_id, $encounter_id));
+        $currentStatus = $encounterRow['status'];
         // Whenever a claim is marked billed, update A/R accordingly.
         if ($status == 2) {
             if ($payer_type > 0) {
+                // Determine the new status based on the current status
+                $newStatus = $currentStatus;
+                if ($currentStatus == 1) {
+                    $newStatus = 2;
+                } elseif ($currentStatus == 4) {
+                    $newStatus = 5;
+                } elseif ($currentStatus == 7) {
+                    $newStatus = 9;
+                }
+    
+                // Update last_level_billed and status
                 sqlStatement("UPDATE form_encounter SET " .
-                    "last_level_billed = ? WHERE " .
-                    "pid = ? AND encounter = ?", array($payer_type, $patient_id, $encounter_id));
+                    "last_level_billed = ?, status = ? WHERE " .
+                    "pid = ? AND encounter = ?", array($payer_type, $newStatus, $patient_id, $encounter_id));
             }
         }
 
