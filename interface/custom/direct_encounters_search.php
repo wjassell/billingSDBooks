@@ -15,10 +15,24 @@ $patientId = $_SESSION['pid'];
 // Initialize variables
 $results = [];
 $cpt_codes = [];
+$selected_cpt_codes = [];
 
 // Set default dates to the last 2 weeks
 $end_date = date('Y-m-d');
 $start_date = date('Y-m-d', strtotime('-14 days'));
+
+// Process form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search'])) {
+    if (isset($_POST['start_date']) && !empty($_POST['start_date'])) {
+        $start_date = $_POST['start_date'];
+    }
+    if (isset($_POST['end_date']) && !empty($_POST['end_date'])) {
+        $end_date = $_POST['end_date'];
+    }
+    if (isset($_POST['cpt_codes']) && is_array($_POST['cpt_codes'])) {
+        $selected_cpt_codes = $_POST['cpt_codes'];
+    }
+}
 
 // Fetch dynamic CPT code options
 $cpt_query = "SELECT DISTINCT billing_code_CR FROM SDBooks1.s4me_spot_billingcode ORDER BY billing_code_CR";
@@ -30,16 +44,25 @@ while ($row = sqlFetchArray($cpt_result)) {
 // Build the query
 $sql = "
     SELECT eo_form_encounter.id, eo_form_encounter.date, eo_form_encounter.time_in, eo_form_encounter.time_out, 
-           s4me_provider.full_name AS Provider, s4me_spot_billingcode.billing_code_CR AS CPT_Code
+           s4me_provider.full_name AS Provider, s4me_spot_billingcode.billing_code_CR AS CPT_Code, eo_form_encounter.consolidated_enc_id
     FROM SDBooks1.eo_form_encounter
     INNER JOIN SDBooks1.s4me_provider ON eo_form_encounter.provider_id = s4me_provider.id
     INNER JOIN SDBooks1.s4me_spot_billingcode ON eo_form_encounter.pc_catid = s4me_spot_billingcode.spot_id
     WHERE eo_form_encounter.pid = ?
     AND eo_form_encounter.date BETWEEN ? AND ?
-    ORDER BY eo_form_encounter.time_in ASC
 ";
 
 $params = [$patientId, $start_date, $end_date];
+
+// Add CPT code filter if specific codes are selected
+if (!empty($selected_cpt_codes)) {
+    $cpt_placeholders = implode(',', array_fill(0, count($selected_cpt_codes), '?'));
+    $sql .= " AND s4me_spot_billingcode.billing_code_CR IN ($cpt_placeholders)";
+    $params = array_merge($params, $selected_cpt_codes);
+}
+
+$sql .= " ORDER BY eo_form_encounter.time_in ASC";
+
 $stmt = sqlStatement($sql, $params);
 
 // Fetch results
@@ -62,7 +85,8 @@ while ($row = sqlFetchArray($stmt)) {
         'start_time' => $start_time,
         'end_time' => $end_time,
         'Provider' => $row['Provider'],
-        'CPT_Code' => $row['CPT_Code']
+        'CPT_Code' => $row['CPT_Code'],
+        'consolidated_enc_id' => $row['consolidated_enc_id']
     ];
 }
 ?>
@@ -76,6 +100,15 @@ while ($row = sqlFetchArray($stmt)) {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .form-row label {
+            font-weight: bold;
+        }
+        .form-row select {
+            min-width: 200px;
+            max-width: 300px;
         }
         table {
             width: 100%;
@@ -90,6 +123,12 @@ while ($row = sqlFetchArray($stmt)) {
         }
         .checkbox-actions {
             margin: 10px 0;
+        }
+        .search-info {
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
         }
     </style>
     <script>
@@ -107,6 +146,22 @@ while ($row = sqlFetchArray($stmt)) {
 <body>
     <h1>Direct Encounters Search</h1>
     <p><strong>Patient ID:</strong> <?= htmlspecialchars($patientId); ?></p>
+    
+    <div class="search-info">
+        <strong>Current Search Parameters:</strong><br>
+        Start Date: <?= htmlspecialchars($start_date); ?><br>
+        End Date: <?= htmlspecialchars($end_date); ?><br>
+        <?php if (!empty($selected_cpt_codes)): ?>
+            CPT Codes: <?= htmlspecialchars(implode(', ', $selected_cpt_codes)); ?><br>
+        <?php else: ?>
+            CPT Codes: All codes<br>
+        <?php endif; ?>
+        <?php if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search'])): ?>
+            <em>Search was performed using the form above.</em>
+        <?php else: ?>
+            <em>Showing default results for the last 2 weeks.</em>
+        <?php endif; ?>
+    </div>
 
     <form method="POST">
         <div class="form-row">
@@ -118,8 +173,9 @@ while ($row = sqlFetchArray($stmt)) {
 
             <label for="cpt_codes">CPT Codes:</label>
             <select name="cpt_codes[]" id="cpt_codes" multiple>
+                <option value="">-- Select CPT Codes (Leave empty for all) --</option>
                 <?php foreach ($cpt_codes as $code): ?>
-                    <option value="<?= htmlspecialchars($code); ?>" <?= in_array($code, $selected_cpt_codes ?? []) ? 'selected' : ''; ?>>
+                    <option value="<?= htmlspecialchars($code); ?>" <?= in_array($code, $selected_cpt_codes) ? 'selected' : ''; ?>>
                         <?= htmlspecialchars($code); ?>
                     </option>
                 <?php endforeach; ?>
@@ -145,6 +201,7 @@ while ($row = sqlFetchArray($stmt)) {
                     <th>End Time</th>
                     <th>Provider</th>
                     <th>CPT Code</th>
+                    <th>Consolidated Enc ID</th>
                 </tr>
                 <?php foreach ($results as $row): ?>
                     <tr>
@@ -154,6 +211,7 @@ while ($row = sqlFetchArray($stmt)) {
                         <td><?= htmlspecialchars($row['end_time']); ?></td>
                         <td><?= htmlspecialchars($row['Provider']); ?></td>
                         <td><?= htmlspecialchars($row['CPT_Code']); ?></td>
+                        <td><?= htmlspecialchars($row['consolidated_enc_id']); ?></td>
                     </tr>
                 <?php endforeach; ?>
             </table>
