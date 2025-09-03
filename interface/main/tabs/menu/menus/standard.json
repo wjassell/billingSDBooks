@@ -1530,6 +1530,18 @@
             ]
           },
           {
+            "label": "Provider Encounters",
+            "menu_id": "rep0",
+            "target": "rep",
+            "url": "/interface/custom/provider_encounters_search.php",
+            "children": [],
+            "requirement": 0,
+            "acl_req": [
+              "encounters",
+              "coding_a"
+            ]
+          },
+          {
             "label": "Appt-Enc",
             "menu_id": "rep0",
             "target": "rep",
