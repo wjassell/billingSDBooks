@@ -53,7 +53,7 @@ $placeholders = implode(',', array_fill(0, count($selected_ids), '?'));
 $sql = "
     SELECT eo_session_notes.note_content, eo_form_encounter.date, eo_form_encounter.time_in, eo_form_encounter.time_out,
            s4me_provider.full_name AS Provider, s4me_patient.full_name AS Patient, 
-           s4me_spot_billingcode.billing_code_CR AS CPT_Code, eo_signatures.signature, eo_form_encounter.id AS encounter_id, eo_form_encounter.consolidated_enc_id, eo_form_encounter.pid, users.npi
+           s4me_spot_billingcode.billing_code_CR AS CPT_Code, TO_BASE64(eo_signatures.signature) AS signature, eo_form_encounter.id AS encounter_id, eo_form_encounter.consolidated_enc_id, eo_form_encounter.pid, users.npi
     FROM SDBooks1.eo_form_encounter
     INNER JOIN SDBooks1.eo_session_notes ON eo_form_encounter.id = eo_session_notes.eo_form_encounter
     INNER JOIN SDBooks1.s4me_provider ON eo_form_encounter.provider_id = s4me_provider.id
